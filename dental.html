@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Clinic Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e3f2fd;
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #007acc;
+            color: white;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        header img {
+            width: 150px;
+            height: auto;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h2 {
+            color: #007acc;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input, select, button {
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            transition: 0.3s;
+        }
+        input:focus, select:focus {
+            border-color: #007acc;
+            outline: none;
+        }
+        button {
+            background-color: #007acc;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background-color: #005f99;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="dental-icon.png" alt="Dental Logo">
+        <h1>Dental Clinic Management System</h1>
+    </header>
+    
+    <div class="container">
+        <section class="welcome">
+            <h2>Welcome to Our Clinic</h2>
+            <p>Book your appointment easily and let us take care of your smile!</p>
+        </section>
+        
+        <section class="reservation">
+            <h2>Book an Appointment</h2>
+            <form id="reservation-form">
+                <label for="name">Full Name:</label>
+                <input type="text" id="name" required>
+                
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+                
+                <label for="date">Preferred Date:</label>
+                <input type="date" id="date" required>
+                
+                <label for="time">Preferred Time:</label>
+                <select id="time" required></select>
+                
+                <label for="regular">Are you a regular patient?</label>
+                <select id="regular" required>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+                
+                <label for="payment">Payment Type:</label>
+                <select id="payment" required>
+                    <option value="Cash">Cash</option>
+                    <option value="Credit Card">Credit Card</option>
+                    <option value="Insurance">Insurance</option>
+                </select>
+                
+                <label for="transaction">Transaction Type:</label>
+                <select id="transaction" required>
+                    <option value="Consultation">Consultation</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Filling">Filling</option>
+                    <option value="Extraction">Extraction</option>
+                </select>
+                
+                <button type="submit">Submit</button>
+            </form>
+        </section>
+    </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const timeSelect = document.getElementById("time");
+            const dateInput = document.getElementById("date");
+
+            function populateTimeSlots() {
+                timeSelect.innerHTML = "";
+                const workHours = [9, 10, 11, 12, 14, 15, 16]; 
+                workHours.forEach(hour => {
+                    let displayHour = hour;
+                    let ampm = "AM";
+                    
+                    if (hour >= 12) {
+                        ampm = "PM";
+                        if (hour > 12) {
+                            displayHour = hour - 12;
+                        }
+                    }
+                    
+                    const option = document.createElement("option");
+                    option.value = `${displayHour}:00 ${ampm}`;
+                    option.textContent = `${displayHour}:00 ${ampm}`;
+                    timeSelect.appendChild(option);
+                });
+            }
+            
+            function checkAppointmentLimit(date) {
+                fetch(`http://localhost:5000/api/reservations?date=${date}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length >= 5) {
+                            alert("Maximum 5 appointments allowed per day. Please choose another date.");
+                            dateInput.value = "";
+                        }
+                    })
+                    .catch(error => console.error("Error checking appointment limit:", error));
+            }
+
+            dateInput.addEventListener("change", function () {
+                checkAppointmentLimit(this.value);
+            });
+
+            populateTimeSlots();
+        });
+
+        document.getElementById("reservation-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const date = document.getElementById("date").value;
+            const time = document.getElementById("time").value;
+            const regular = document.getElementById("regular").value;
+            const payment = document.getElementById("payment").value;
+            const transaction = document.getElementById("transaction").value;
+
+            fetch("http://localhost:5000/api/reservations", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, date, time, regular, payment, transaction })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("Appointment booked successfully!");
+                form.reset();
+            })
+            .catch(error => alert("Error booking appointment."));
+        });
+    </script>
+</body>
+</html>
